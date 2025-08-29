@@ -1,25 +1,27 @@
 # app.py
-from flask import Flask, request, jsonify
-from flask_cors import CORS  # Critical for web browser security
+from flask import Flask, request, jsonify, render_template
+from flask_cors import CORS
 import requests
 import logging
+import os
 
-# Set up basic logging to see what's happening
+# Set up basic logging
 logging.basicConfig(level=logging.INFO)
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder='.') # Points Flask to the current directory for templates
 # Enable CORS for all origins. For a production app, you'd restrict this.
 CORS(app)
 
 # Configuration - Connect to your LOCAL Ollama
 OLLAMA_URL = "http://localhost:11434/api/chat"
-MODEL_NAME = "llama3.2"  # Change this if you use a different model
+MODEL_NAME = "llama3.2"
 
-# This is the new homepage route
+# This is the new homepage route that serves index.html
 @app.route('/', methods=['GET'])
 def home():
     """Returns the homepage of the chatbot app."""
-    return "Welcome to your chatbot's homepage!"
+    # This will now serve the index.html file
+    return render_template('index.html')
 
 @app.route('/health', methods=['GET'])
 def health_check():
@@ -32,40 +34,32 @@ def chat():
     app.logger.info("Received a request to /chat endpoint")
     
     try:
-        # Get the JSON data sent from the website
         data = request.get_json()
         if not data:
             app.logger.error("No JSON data received")
             return jsonify({'error': 'No data provided'}), 400
         
-        # Extract the user's message
         user_message = data.get('message')
         app.logger.info(f"User message: {user_message}")
         
         if not user_message:
             return jsonify({'error': 'No message found in request'}), 400
 
-        # Prepare the data to send to Ollama
         ollama_payload = {
             "model": MODEL_NAME,
-            "stream": False,  # We want a single response
+            "stream": False,
             "messages": [{"role": "user", "content": user_message}]
         }
         app.logger.info(f"Sending request to Ollama at {OLLAMA_URL}")
         
-        # Send the request to the LOCAL Ollama server
-        response = requests.post(OLLAMA_URL, json=ollama_payload, timeout=120)  # 120-second timeout
-        
-        # This will raise an exception for bad status codes
+        response = requests.post(OLLAMA_URL, json=ollama_payload, timeout=120)
         response.raise_for_status()
         
-        # Get the response from Ollama
         ollama_response = response.json()
         bot_reply = ollama_response['message']['content']
         
-        app.logger.info(f"Successfully received reply from Ollama: {bot_reply[:50]}...") # Log first 50 chars
+        app.logger.info(f"Successfully received reply from Ollama: {bot_reply[:50]}...")
 
-        # Send the successful reply back to the website
         return jsonify({'reply': bot_reply})
 
     except requests.exceptions.ConnectionError:
@@ -89,7 +83,6 @@ def chat():
         app.logger.error(error_msg)
         return jsonify({'error': error_msg}), 500
 
-# This runs the Flask development server
 if __name__ == '__main__':
     app.logger.info("Starting Flask server...")
     app.run(debug=True, host='0.0.0.0')
