@@ -133,7 +133,7 @@
 
     <script>
         // Use the appropriate API URL for your setup
-        const API_URL = 'http://127.0.0.1:5000/chat'; // Your local Flask server
+        const API_URL = 'http://13.60.5.129:5000/chat'; // Your server's public IP
         let isConnected = false;
 
         // Check server connection on page load
@@ -245,10 +245,9 @@
                 
                 const data = await response.json();
                 
-                // Check for response
-                if (data.response) {
+                if (data.reply) {
                     // Add bot's reply to the chat
-                    addMessage('bot', data.response);
+                    addMessage('bot', data.reply);
                 } else if (data.error) {
                     addMessage('bot', `Error: ${data.error}`);
                 } else {
@@ -263,7 +262,6 @@
                     typingIndicator.remove();
                 }
                 
-                // More specific error message
                 if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
                     updateConnectionStatus(false);
                     addMessage('bot', 'Connection failed. Please check: 1) Flask server is running, 2) No CORS issues, 3) Correct URL');
