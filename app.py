@@ -14,7 +14,7 @@ CORS(app)
 
 # Configuration - Connect to your LOCAL Ollama
 OLLAMA_URL = "http://localhost:11434/api/chat"
-MODEL_NAME = "llama3.2"
+MODEL_NAME = "tinyllama"
 
 # This is the new homepage route that serves index.html
 @app.route('/', methods=['GET'])
@@ -46,7 +46,7 @@ def chat():
             return jsonify({'error': 'No message found in request'}), 400
 
         ollama_payload = {
-            "model": llama3.2,
+            "model": tinyllama,
             "stream": False,
             "messages": [{"role": "user", "content": user_message}]
         }
